@@ -1,31 +1,41 @@
-import 'package:mailer/mailer.dart';
-import 'package:mailer/smtp_server.dart';
+import 'dart:developer' as developer;
 import 'dart:math';
 
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server.dart';
+
 class SmtpService {
-  // TODO: Thay đổi email và mật khẩu ứng dụng thật của bạn ở đây
-  // Lưu ý: Đối với Gmail, bạn cần tạo "Mật khẩu ứng dụng" (App Password)
-  final String username = 'dummytester9999@gmail.com'; 
-  final String password = 'dummy_app_password';
+  static const String _username = '';
+  static const String _password = '';
+  static String? lastError;
 
   Future<String?> sendPasswordResetEmail(String recipientEmail) async {
-    final smtpServer = gmail(username, password);
-    
-    // Tạo mã xác nhận ngẫu nhiên (chỉ để demo)
-    final randomCode = Random().nextInt(900000) + 100000; 
+    lastError = null;
+    final username = _username.trim();
+    final password = _password.replaceAll(' ', '');
 
-    final message = Message()
-      ..from = Address(username, 'Ứng dụng UTC2')
-      ..recipients.add(recipientEmail)
-      ..subject = 'Yêu cầu đặt lại mật khẩu'
-      ..text = 'Xin chào,\n\nMã xác nhận đặt lại mật khẩu của bạn là: $randomCode\n\nVui lòng không chia sẻ mã này với bất kỳ ai.\n\nTrân trọng,\nĐội ngũ hỗ trợ';
+    final smtpServer = gmail(username, password);
+    final randomCode = Random().nextInt(900000) + 100000;
+
+    final message =
+        Message()
+          ..from = Address(username, 'Ứng dụng UTC2')
+          ..recipients.add(recipientEmail)
+          ..subject = 'Yêu cầu đặt lại mật khẩu'
+          ..text =
+              'Xin chào,\n\n'
+              'Mã xác nhận đặt lại mật khẩu của bạn là: $randomCode\n\n'
+              'Vui lòng không chia sẻ mã này với bất kỳ ai.\n\n'
+              'Trân trọng,\n'
+              'Đội ngũ hỗ trợ';
 
     try {
       final sendReport = await send(message, smtpServer);
-      print('Message sent: ' + sendReport.toString());
+      developer.log('Message sent: $sendReport');
       return randomCode.toString();
-    } catch (e) {
-      print('Message not sent. Error: $e');
+    } catch (e, stackTrace) {
+      lastError = e.toString();
+      developer.log('Message not sent. Error: $e', stackTrace: stackTrace);
       return null;
     }
   }

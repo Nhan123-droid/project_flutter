@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class CustomInputField extends StatelessWidget {
+class CustomInputField extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
   final IconData prefixIcon;
@@ -8,25 +8,53 @@ class CustomInputField extends StatelessWidget {
   final IconData? endIcon;
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
-  CustomInputField({
+  const CustomInputField({
+    super.key,
     required this.controller,
     required this.hintText,
     required this.prefixIcon,
     this.obscureText = false,
     this.endIcon,
     required this.validator,
-    this.onChanged
+    this.onChanged,
   });
+
+  @override
+  State<CustomInputField> createState() => _CustomInputFieldState();
+}
+
+class _CustomInputFieldState extends State<CustomInputField> {
+  late bool _isObscured;
+
+  @override
+  void initState() {
+    super.initState();
+    _isObscured = widget.obscureText;
+  }
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
+      controller: widget.controller,
+      obscureText: _isObscured,
       decoration: InputDecoration(
-        hintText: hintText,
-        prefixIcon: Icon(prefixIcon),
-        suffixIcon: endIcon != null ? Icon(endIcon) : null,
+        hintText: widget.hintText,
+        prefixIcon: Icon(widget.prefixIcon),
+        suffixIcon:
+            widget.obscureText
+                ? IconButton(
+                  icon: Icon(
+                    _isObscured ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isObscured = !_isObscured;
+                    });
+                  },
+                )
+                : widget.endIcon != null
+                ? Icon(widget.endIcon)
+                : null,
         filled: true,
         fillColor: Colors.white,
         contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
@@ -43,8 +71,8 @@ class CustomInputField extends StatelessWidget {
           borderSide: BorderSide(color: Colors.blue),
         ),
       ),
-      validator: validator,
-      onChanged: onChanged,
+      validator: widget.validator,
+      onChanged: widget.onChanged,
     );
   }
 }

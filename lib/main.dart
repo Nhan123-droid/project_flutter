@@ -5,58 +5,66 @@ import 'package:flutter/material.dart';
 import 'copoment/custom_buttom_widget.dart';
 import 'copoment/custom_header_widget.dart';
 import 'copoment/custom_textfield.dart';
-import 'db/UserDatabaseHelper.dart';
+import 'db/user_database_helper.dart';
 import 'profile_screen.dart';
-void main(){
-  runApp(MyApp());
+import 'utils/form_validators.dart';
+
+void main() {
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
+      home: const HomeScreen(),
       routes: {
-        '/forgot' : (context) => forgotPassword(),
-        '/registor': (context) => Registor_Screen(),
+        '/forgot': (context) => const ForgotPassword(),
+        '/registor': (context) => const RegistorScreen(),
       },
     );
   }
 }
 
 class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: <Widget>[
-            CustomHeaderWidget(
-              imagePath: 'asset/img.png',   // Đường dẫn ảnh nền
-              logoPath: 'asset/img.png',   // Đường dẫn logo
-              title: 'Chào mừng!',           // Tiêu đề
-              subtitle: 'Đăng nhập vào tài khoản của bạn', // Phụ đề
+    return const Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                CustomHeaderWidget(
+                  imagePath: 'asset/img.png',
+                  logoPath: 'asset/img.png',
+                  title: 'Chào mừng!',
+                  subtitle: 'Đăng nhập vào tài khoản của bạn',
+                ),
+                SizedBox(height: 36),
+                LoginFormWidget(),
+                SizedBox(height: 20),
+                ActionButtonsWidget(),
+              ],
             ),
-            SizedBox(height: 40),
-            LoginFormWidget(),
-            SizedBox(height: 20),
-            ActionButtonsWidget(),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-
-
-
-// LoginForm sử dụng CustomInputField cho email và password
 class LoginFormWidget extends StatefulWidget {
+  const LoginFormWidget({super.key});
+
   @override
-  _LoginFormWidgetState createState() => _LoginFormWidgetState();
+  State<LoginFormWidget> createState() => _LoginFormWidgetState();
 }
 
 class _LoginFormWidgetState extends State<LoginFormWidget> {
@@ -65,19 +73,31 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
   final TextEditingController _passwordController = TextEditingController();
 
   void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      var user = await UserDatabaseHelper().login(_emailController.text, _passwordController.text);
-      if (user != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đăng nhập thành công, xin chào ${user.name}')));
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ProfileScreen(user: user)),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sai email hoặc mật khẩu')));
-      }
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng kiểm tra lại dữ liệu')),
+      );
+      return;
+    }
+
+    final user = await UserDatabaseHelper().login(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+    if (!mounted) return;
+
+    if (user != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Đăng nhập thành công, xin chào ${user.name}')),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => ProfileScreen(user: user)),
+      );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Vui lòng kiểm tra lại dữ liệu')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Sai email hoặc mật khẩu')));
     }
   }
 
@@ -94,46 +114,31 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               hintText: 'Email',
               prefixIcon: Icons.email,
               endIcon: null,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Email không được để trống';
-                }
-                if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) {
-                  return 'Email không hợp lệ';
-                }
-                return null;
-              },
+              validator: FormValidators.email,
             ),
           ),
-          SizedBox(height: 16),
-          SizedBox(width: 340,
-           child: CustomInputField(
+          const SizedBox(height: 16),
+          SizedBox(
+            width: 340,
+            child: CustomInputField(
               controller: _passwordController,
               hintText: 'Password',
               prefixIcon: Icons.lock,
               endIcon: Icons.remove_red_eye,
               obscureText: true,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Mật khẩu không được để trống';
-                }
-                if (value.length < 6) {
-                  return 'Mật khẩu phải có ít nhất 6 ký tự';
-                }
-                return null;
-              },
+              validator: FormValidators.password,
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           SizedBox(
             width: 340,
             child: CustomElevatedButton(
-                onPressed: _submitForm,  // Chuyển hướng tới hàm _submitForm
-                label: 'Đăng nhập',       // Text hiển thị trên nút
-                icon: Icons.login,        // Icon của nút
-                color: Colors.orange,     // Màu nền của nút
-              ),
-          )
+              onPressed: _submitForm,
+              label: 'Đăng nhập',
+              icon: Icons.login,
+              color: Colors.orange,
+            ),
+          ),
         ],
       ),
     );
@@ -141,44 +146,46 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
 }
 
 class ActionButtonsWidget extends StatelessWidget {
+  const ActionButtonsWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
         SizedBox(
-          width: 150,
-          child:  TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/forgot');
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.key, color: Colors.deepPurpleAccent),
-                    Text('Quên mật khẩu?', style: TextStyle(color: Colors.indigo)),
-                  ],
-                )
+          width: 170,
+          child: TextButton.icon(
+            onPressed: () {
+              Navigator.pushNamed(context, '/forgot');
+            },
+            icon: const Icon(Icons.key, color: Colors.deepPurpleAccent),
+            label: const Text(
+              'Quên mật khẩu?',
+              style: TextStyle(color: Colors.indigo),
             ),
           ),
-
-        DividerWithText(text: 'Hoặc'),
-        SizedBox(height: 20),
-        Text("Chưa có tài khoản"),
-        SizedBox(height: 10),
+        ),
+        const DividerWithText(text: 'Hoặc'),
+        const SizedBox(height: 20),
+        const Text('Chưa có tài khoản'),
+        const SizedBox(height: 10),
         SizedBox(
           width: 220,
           child: ElevatedButton.icon(
             onPressed: () {
               Navigator.pushNamed(context, '/registor');
             },
-            icon: Icon(Icons.child_friendly, color: Colors.indigo),
-            label: Text('Đăng ký ngay', style: TextStyle(color: Colors.indigo)),
+            icon: const Icon(Icons.child_friendly, color: Colors.indigo),
+            label: const Text(
+              'Đăng ký ngay',
+              style: TextStyle(color: Colors.indigo),
+            ),
             style: ElevatedButton.styleFrom(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: Colors.indigo, width: 2),
+                side: const BorderSide(color: Colors.indigo, width: 2),
               ),
-              padding: EdgeInsets.symmetric(vertical: 14, horizontal: 30),
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 30),
             ),
           ),
         ),
@@ -190,21 +197,21 @@ class ActionButtonsWidget extends StatelessWidget {
 class DividerWithText extends StatelessWidget {
   final String text;
 
-  DividerWithText({required this.text});
+  const DividerWithText({super.key, required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: <Widget>[
-        Expanded(child: Divider()),
+        const Expanded(child: Divider()),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Text(
             text,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-        Expanded(child: Divider()),
+        const Expanded(child: Divider()),
       ],
     );
   }

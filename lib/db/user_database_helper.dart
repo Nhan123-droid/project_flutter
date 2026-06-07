@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../model/User.dart';
+import '../model/user.dart';
 
 class UserDatabaseHelper {
   static final UserDatabaseHelper _instance = UserDatabaseHelper._internal();
@@ -95,10 +95,6 @@ class UserDatabaseHelper {
 
   Future<int> deleteUser(int id) async {
     final db = await database;
-    return await db.delete(
-      'users',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('users', where: 'id = ?', whereArgs: [id]);
   }
 }

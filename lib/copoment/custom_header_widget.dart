@@ -7,62 +7,92 @@ class CustomHeaderWidget extends StatelessWidget {
   final String subtitle;
   final double opacity;
 
-  CustomHeaderWidget({
-    required this.imagePath,  // Đường dẫn đến ảnh nền
-    required this.logoPath,   // Đường dẫn đến logo
-    required this.title,      // Tiêu đề
-    required this.subtitle,   // Phụ đề
-    this.opacity = 0.6,       // Mức độ opacity của lớp phủ
+  const CustomHeaderWidget({
+    super.key,
+    required this.imagePath,
+    required this.logoPath,
+    required this.title,
+    required this.subtitle,
+    this.opacity = 0.45,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        // Ảnh nền
-        Image.asset(imagePath, width: double.infinity, height: 250, fit: BoxFit.cover),
+    final bool showLogo = logoPath.trim().isNotEmpty;
 
-        // Lớp phủ với độ mờ (opacity)
-        Opacity(
-          opacity: opacity,
-          child: Container(
-            width: double.infinity,
-            height: 250,
-            color: Colors.deepPurpleAccent,
-          ),
-        ),
-
-        // Nội dung nằm trên ảnh nền
-        Positioned(
-          left: 80,
-          top: 10,
-          child: Column(
-            children: [
-              Image.asset(
-                logoPath, // Đường dẫn đến logo
-                width: 160,
-                height: 160,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: double.infinity,
+        height: 220,
+        child: Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            Image.asset(imagePath, fit: BoxFit.cover),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.deepPurpleAccent.withValues(alpha: opacity),
               ),
-              Text(
-                title, // Tiêu đề
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.35),
+                  ],
                 ),
               ),
-              Text(
-                subtitle, // Phụ đề
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.normal,
-                  color: Colors.white,
-                ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              child: Column(
+                mainAxisAlignment:
+                    showLogo ? MainAxisAlignment.center : MainAxisAlignment.end,
+                children: [
+                  if (showLogo) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        logoPath,
+                        width: 128,
+                        height: 88,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    subtitle,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

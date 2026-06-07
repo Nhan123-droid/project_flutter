@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'reset_password_screen.dart';
 import 'copoment/custom_textfield.dart';
 import 'copoment/custom_buttom_widget.dart';
+import 'utils/form_validators.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
   final String otp;
 
-  OtpVerificationScreen({required this.email, required this.otp});
+  const OtpVerificationScreen({
+    super.key,
+    required this.email,
+    required this.otp,
+  });
 
   @override
-  _OtpVerificationScreenState createState() => _OtpVerificationScreenState();
+  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
@@ -22,10 +27,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       if (_otpController.text == widget.otp) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ResetPasswordScreen(email: widget.email)),
+          MaterialPageRoute(
+            builder: (context) => ResetPasswordScreen(email: widget.email),
+          ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Mã OTP không chính xác')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Mã OTP không chính xác')));
       }
     }
   }
@@ -51,12 +60,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 controller: _otpController,
                 hintText: 'Mã OTP',
                 prefixIcon: Icons.security,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập mã OTP';
-                  }
-                  return null;
-                },
+                validator: FormValidators.otp,
               ),
               SizedBox(height: 30),
               SizedBox(

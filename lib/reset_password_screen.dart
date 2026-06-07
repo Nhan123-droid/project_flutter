@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
-import 'db/UserDatabaseHelper.dart';
+import 'db/user_database_helper.dart';
 import 'copoment/custom_textfield.dart';
 import 'copoment/custom_buttom_widget.dart';
+import 'utils/form_validators.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
 
-  ResetPasswordScreen({required this.email});
+  const ResetPasswordScreen({super.key, required this.email});
 
   @override
-  _ResetPasswordScreenState createState() => _ResetPasswordScreenState();
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   void _resetPassword() async {
     if (_formKey.currentState!.validate()) {
@@ -23,11 +25,21 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       if (user != null) {
         user.password = _passwordController.text;
         await UserDatabaseHelper().updateUser(user);
-        
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đổi mật khẩu thành công!')));
-        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false); // Về màn hình đăng nhập
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Đổi mật khẩu thành công!')));
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/',
+          (route) => false,
+        ); // Về màn hình đăng nhập
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Không tìm thấy người dùng')));
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Không tìm thấy người dùng')));
       }
     }
   }
@@ -48,15 +60,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 hintText: 'Mật khẩu mới',
                 prefixIcon: Icons.lock,
                 obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập mật khẩu';
-                  }
-                  if (value.length < 6) {
-                    return 'Mật khẩu phải lớn hơn 6 ký tự';
-                  }
-                  return null;
-                },
+                validator: FormValidators.password,
               ),
               SizedBox(height: 20),
               CustomInputField(
@@ -64,12 +68,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 hintText: 'Xác nhận mật khẩu',
                 prefixIcon: Icons.lock,
                 obscureText: true,
-                validator: (value) {
-                  if (value != _passwordController.text) {
-                    return 'Mật khẩu xác nhận không khớp';
-                  }
-                  return null;
-                },
+                validator:
+                    (value) => FormValidators.confirmPassword(
+                      value,
+                      _passwordController.text,
+                    ),
               ),
               SizedBox(height: 30),
               SizedBox(

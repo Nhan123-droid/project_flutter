@@ -1,184 +1,212 @@
-
-
 import 'package:final_exam_flutter/copoment/custom_header_widget.dart';
 import 'package:final_exam_flutter/copoment/custom_textfield.dart';
 import 'package:flutter/material.dart';
-import 'service/smtp_service.dart';
+
+import 'db/user_database_helper.dart';
 import 'otp_verification_screen.dart';
+import 'service/smtp_service.dart';
+import 'utils/form_validators.dart';
 
-class forgotPassword extends StatelessWidget {
-  const forgotPassword({super.key});
+class ForgotPassword extends StatelessWidget {
+  const ForgotPassword({super.key});
 
   @override
   Widget build(BuildContext context) {
-
-    return  Scaffold(
-      body: Padding(
+    return const Scaffold(
+      body: SafeArea(
+        child: Padding(
           padding: EdgeInsets.all(16),
-
-          child: Column(
-            children: [
-              CustomHeaderWidget(imagePath: 'asset/img.png', logoPath: 'asset/img.png', title: 'Quên mật khẩu', subtitle: 'Đừng lo lắng, chúng tôi sẽ giúp bạn'),
-              SizedBox(height: 30,),
-              Introduce(),
-              SizedBox(height: 30,),
-              _ForgotPasswordFromWidgetState(),
-            ],
-
-          ),
-
-      ),
-
-    );
-  }
-}
-class Introduce extends StatelessWidget {
-  const Introduce({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 340,
-        height: 100,
-        color: Colors.white70,
-        child: Row(
-          children: [
-            Container(
-              width: 4,
-              color: Colors.indigo,
-            ),
-            SizedBox(width: 20,),
-          Expanded(
+          child: SingleChildScrollView(
             child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.info_outline_rounded, color: Colors.indigo, ),
-                  SizedBox(width: 10,),
-                  Text("Hướng dẫn ", style: TextStyle(color : Colors.indigo, fontWeight: FontWeight.bold), )
-                ],
-              ),
-              SizedBox(height: 10),
-              Text("Nhập địa chỉ email đã đăng ký để nhận liên kết "),
-              Text("đặt lại mật khẩu. Kiểm tra cả họp thư rác "),
-              Text("nếu không thấy email ")
-            ],
-          ))
-          ],
+              children: [
+                CustomHeaderWidget(
+                  imagePath: 'asset/img.png',
+                  logoPath: 'asset/img.png',
+                  title: 'Quên mật khẩu',
+                  subtitle: 'Đừng lo lắng, chúng tôi sẽ giúp bạn',
+                ),
+                SizedBox(height: 30),
+                Introduce(),
+                SizedBox(height: 30),
+                ForgotPasswordForm(),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _ForgotPasswordFromWidgetState extends StatefulWidget {
-  const _ForgotPasswordFromWidgetState({super.key});
+class Introduce extends StatelessWidget {
+  const Introduce({super.key});
 
   @override
-  State<_ForgotPasswordFromWidgetState> createState() => _ForgotPasswordFromWidgetStateState();
+  Widget build(BuildContext context) {
+    return Center(
+      child: SizedBox(
+        width: 340,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white70,
+            border: Border(left: BorderSide(color: Colors.indigo, width: 4)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, color: Colors.indigo),
+                    SizedBox(width: 10),
+                    Text(
+                      'Hướng dẫn',
+                      style: TextStyle(
+                        color: Colors.indigo,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Nhập địa chỉ email đã đăng ký để nhận mã xác thực đặt lại mật khẩu.',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _ForgotPasswordFromWidgetStateState extends State<_ForgotPasswordFromWidgetState> {
+class ForgotPasswordForm extends StatefulWidget {
+  const ForgotPasswordForm({super.key});
+
+  @override
+  State<ForgotPasswordForm> createState() => _ForgotPasswordFormState();
+}
+
+class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _emailControler = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
   void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => Center(child: CircularProgressIndicator()),
+    if (!_formKey.currentState!.validate()) return;
+
+    final email = _emailController.text.trim();
+    final user = await UserDatabaseHelper().getUserByEmail(email);
+    if (!mounted) return;
+
+    if (user == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Email chưa được đăng ký')));
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final otp = await SmtpService().sendPasswordResetEmail(email);
+    if (!mounted) return;
+
+    Navigator.pop(context);
+
+    if (otp != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã gửi email khôi phục thành công!')),
       );
-      
-      String? otp = await SmtpService().sendPasswordResetEmail(_emailControler.text);
-      
-      Navigator.pop(context); // Đóng loading dialog
-      
-      if (otp != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đã gửi email khôi phục thành công!')));
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => OtpVerificationScreen(email: _emailControler.text, otp: otp)),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi khi gửi email, vui lòng thử lại sau.')));
-      }
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OtpVerificationScreen(email: email, otp: otp),
+        ),
+      );
+    } else {
+      final error = SmtpService.lastError;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error == null
+                ? 'Lỗi khi gửi email, vui lòng thử lại sau.'
+                : 'Lỗi gửi email: $error',
+          ),
+        ),
+      );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Form(
-        key: _formKey,
-        child:Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 340,
-              height: 60,
-              child: CustomInputField(controller: _emailControler , hintText: 'Địa chỉ email', prefixIcon: Icons.email, validator: (value) {
-                if(value == null || value.isEmpty){
-                  return 'Email can not empty';
-                }
-                if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) {
-                  return 'Email không hợp lệ';
-                }
-                return null;
-              }, ),
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 340,
+            child: CustomInputField(
+              controller: _emailController,
+              hintText: 'Địa chỉ email',
+              prefixIcon: Icons.email,
+              validator: FormValidators.email,
             ),
-            SizedBox(height: 20,),
-            SizedBox(
-              width: 340,
-              child: ElevatedButton.icon(
-                onPressed: _submitForm,
-                icon: Icon(Icons.airline_stops, color: Colors.white),
-                label: Text(
-                  'Gửi liên kết đặt lại',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: 340,
+            child: ElevatedButton.icon(
+              onPressed: _submitForm,
+              icon: const Icon(Icons.mail, color: Colors.white),
+              label: const Text(
+                'Gửi mã đặt lại',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 14, horizontal: 30),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 30,
                 ),
               ),
             ),
-           SizedBox(
-             height: 20,
-           ),
-           SizedBox(
-             width: 170,
-             child:  TextButton(
-                 onPressed: () {
-                   Navigator.pop(context);
-                 },
-                 child: Row(
-                     children: [
-                       Icon(Icons.arrow_back),
-                       Text("Quay lại đăng nhập")
-                     ]
-
-                 ))
-             ,
-           ),
-            SizedBox(
-              height: 10,
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: 190,
+            child: TextButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Quay lại đăng nhập'),
             ),
-            SizedBox(
-              width: 200,
-              child: Row(
-                  children: [
-                    Text("Vẫn gặp vấn đề? "),
-                    Text("Liên hệ hỗ trợ", style: TextStyle(color: Colors.deepPurpleAccent),)
-                  ]
-                  )
-            ),
-
-          ],
-        )
+          ),
+          const SizedBox(height: 10),
+          const Wrap(
+            alignment: WrapAlignment.center,
+            children: [
+              Text('Vẫn gặp vấn đề? '),
+              Text(
+                'Liên hệ hỗ trợ',
+                style: TextStyle(color: Colors.deepPurpleAccent),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

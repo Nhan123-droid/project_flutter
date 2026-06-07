@@ -1,4 +1,4 @@
-class User{
+class User {
   int? id;
   String name;
   String email;
@@ -16,32 +16,32 @@ class User{
     required this.genDer,
     required this.dateOfBirth,
     required this.password,
-    this.avatarPath
+    this.avatarPath,
   });
 
-  Map<String, dynamic> toMap(){
-    return{
-      'id' : id,
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
       'name': name,
       'email': email,
-      'phone' : phone,
-      'genDer' : genDer,
-      'dateOfBirth' : dateOfBirth.toIso8601String(),
-      'password' : password,
-      'avatarPath': avatarPath
+      'phone': phone,
+      'genDer': genDer,
+      'dateOfBirth': dateOfBirth.toIso8601String(),
+      'password': password,
+      'avatarPath': avatarPath,
     };
   }
-  factory User.fromMap(Map<String, dynamic> map){
+
+  factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      id : map['id'],
+      id: map['id'],
       name: map['name'],
-      email : map['email'],
+      email: map['email'],
       phone: map['phone'],
       genDer: map['genDer'],
-      dateOfBirth : DateTime.parse(map['dateOfBirth']),
+      dateOfBirth: DateTime.parse(map['dateOfBirth']),
       password: map['password'],
-      avatarPath: map['avatarPath']
+      avatarPath: map['avatarPath'],
     );
   }
-
 }
